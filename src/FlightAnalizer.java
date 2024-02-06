@@ -45,7 +45,7 @@ public class FlightAnalizer {
 
             System.out.println("\nРазница между средней ценой и медианой для полета между городами Владивосток и" +
                     " Тель-Авив:");
-            priceStats.forEach((carrier, avgPrice) -> System.out.println(carrier + ": " + Math.abs(avgPrice -
+            priceStats.forEach((carrier, avgPrice) -> System.out.println(Math.abs(avgPrice -
                     calculateMedianPrice(priceStats, carrier))));
 
         } catch (Exception e) {
