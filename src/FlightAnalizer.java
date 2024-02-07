@@ -2,9 +2,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class FlightAnalizer {
     public static void main(String[] args) {
@@ -14,7 +12,7 @@ public class FlightAnalizer {
             JsonNode tickets = rootNode.get("tickets");
 
             Map<String, Integer> minFlightTimes = new HashMap<>();
-            Map<String, Double> priceStats = new HashMap<>();
+            List<Double> prices = new ArrayList<>();
 
             for (JsonNode ticket : tickets) {
                 String from = ticket.get("origin_name").asText();
@@ -29,25 +27,15 @@ public class FlightAnalizer {
                     if (!minFlightTimes.containsKey(carrier) || duration < minFlightTimes.get(carrier)) {
                         minFlightTimes.put(carrier, duration);
                     }
-
-                    if (!priceStats.containsKey(carrier)) {
-                        priceStats.put(carrier, price);
-                    } else {
-                        double avgPrice = priceStats.get(carrier);
-                        priceStats.put(carrier, avgPrice + (price - avgPrice) / 2);
-                    }
+                    prices.add(price);
                 }
             }
 
             System.out.println("Минимальное время полета между городами Владивосток и Тель-Авик для каждого" +
                     " авиаперевозчика:");
             minFlightTimes.forEach((carrier, time) -> System.out.println(carrier + ": " + time + " минут"));
-
             System.out.println("\nРазница между средней ценой и медианой для полета между городами Владивосток и" +
-                    " Тель-Авив:");
-            priceStats.forEach((carrier, avgPrice) -> System.out.println(Math.abs(avgPrice -
-                    calculateMedianPrice(priceStats, carrier))));
-
+                    " Тель-Авив: " + calculateDifference(prices));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -64,14 +52,16 @@ public class FlightAnalizer {
         return (arrivalHour - depatureHour) * 60 + (arrivalMinute - departureMinute);
     }
 
-    private static double calculateMedianPrice(Map<String, Double> prices, String carrier) {
-        double[] carrierPrices = prices.values().stream().mapToDouble(Double::doubleValue).toArray();
-        Arrays.sort(carrierPrices);
-        int length = carrierPrices.length;
-        if (length % 2 == 0) {
-            return (carrierPrices[length / 2 - 1] + carrierPrices[length / 2]) / 2;
+    private static double calculateDifference(List<Double> prices) {
+        Collections.sort(prices);
+        double averagePrice = prices.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        double median;
+        int size = prices.size();
+        if (size % 2 == 0) {
+            median = (prices.get(size / 2 - 1) + prices.get(size / 2)) / 2;
         } else {
-            return carrierPrices[length / 2];
+            median = prices.get(size / 2);
         }
+        return averagePrice - median;
     }
 }
